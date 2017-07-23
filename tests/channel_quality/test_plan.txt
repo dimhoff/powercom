@@ -1,0 +1,47 @@
+# Test Setup
+## Hardware Setup
+Test are conducted with a modified extension cord with a split core current
+transformer on one of the power lines. A power block with the following devices
+is connected on the extension cord:
+
+* Computers:
+** Dell PowerEdge 1950
+** Custom Desktop i7-2600
+** Dell Vostro 3550
+** Intel NUC7i5BNH
+* Monitor: Dell P2314H
+* Network Switch: Target 8 port 10/100 n-way switch
+
+A raspberry pi with USB sound card is used to capture the current transformer
+output. A small resistor is placed in paralel to the current transformer to
+prevent clipping of the sound card input. The resistor value is tweaked such
+that the signal peak is at about XXX75% ???XXXX of the input range if all devices are
+powered up but idle.
+
+The raspberry pi is connected to a power socket upstream from the current
+transformer.
+
+## Software Setup
+On the host under test the send_idx_packets.py script will be run. This script
+will use the powercom_send command to send packets with a sequencely increasing
+number.
+
+The Raspberry Pi will use the below sox command to capture the current usage of
+the setup and store this locally for later processing.
+
+    sox '|rec -c 1 -r 48000 -p' -b 32 -e float output.wav rate 2000
+
+All other machines in the setup will be powered on but idle.
+
+## Post processing
+To verify the amount of packet loss after running the test the captured wave is
+replayed using _sox_ and the _nc_ command, as follows:
+
+    sox input.wav -b 32 -e float -t raw - | nc -l 12345
+
+The output is demoduled with the powercom_demod_bpsk.py script. The decoded is
+done using the powercom_decoder_packet.py with the '-t' option to enable test
+mode.
+
+The output from the decoder is dumped to a temperorary file and compared to the
+expected output using the _diff_ utility. 
